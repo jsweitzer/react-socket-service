@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Dashboard</title>
+    <link rel="stylesheet" href="Css/bootstrap-4.0.0.css" />
+    <link rel="stylesheet" href="Css/ArcChart.css" />
+    <style>
+        .canvasjs-chart-credit{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!--Script references. -->
+    <script src="https://code.jquery.com/jquery-1.9.1.js" integrity="sha256-e9gNBsAcA0DBuRWbm0oZfbiCyhjLrI6bmqAl5o+ZjUA=" crossorigin="anonymous"></script>
+    <script src="Scripts/Modules/jquery.signalR-2.2.3.min.js"></script>
+    <script src="Scripts/Modules/canvasjs-1.7.0.js"></script>
+    <script src="signalr/hubs"></script>
+    <script src="http://cdn.date-fns.org/v1.9.0/date_fns.min.js"></script>
+    <script src="Scripts/Arc.js"></script>
+    
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.min.js" integrity="sha384-feJI7QwhOS+hwpX2zkaeJQjeiwlhOP+SdQDqhgvvo1DsjtiSQByFdThsxO669S2D" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js" integrity="sha384-SlE991lGASHoBfWbelyBPLsUlwY1GwNDJo3jSJO04KZ33K2bwfV9YBauFfnzvynJ" crossorigin="anonymous"></script>
+    <!--End script references-->
+    <div id="navBar"></div>
+    <div id="root" class="container-fluid">
+        <div id="chartRow" class="row">
+            <i id="topOfTheCharts" style="display:none;"></i>
+        </div>
+        <div id="testChart" style="height: 300px; width: 100%;">
+        </div>
+        <div id="testChart2" style="height: 300px; width: 100%;">
+        </div>
+    </div>
+    <div id="chartModal"></div>
+    <div id="loginModal"></div>
+</body>
+</html>
