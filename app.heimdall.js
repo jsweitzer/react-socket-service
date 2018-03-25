@@ -3,18 +3,110 @@ var crypto = require('crypto');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var MongoClient = require('mongodb').MongoClient;
+var ObjectID = require('mongodb').ObjectID;
 var url = "mongodb://localhost:27017/";
-//insert hard coded chart and data
-/*
-MongoClient.connect(url, function(err, db){
-  if(err) throw err;
-  var dbo= db.db("chartdb");
+var templates = require('./templates/canvasjs.charts');
+
+//set global mongo connections
+var db;
+MongoClient.connect(url, function(err, con){
+  db = con;
+  var data = templates.BarChartData;
+  var chart = {};
+  chart.chart = templates.BarChart.chart;
+  console.log('CHART' + JSON.stringify(chart))
+  chart._id = new ObjectID();
+  chart.data = data;
+  console.log(JSON.stringify(chart));
+  chart.chartId = chart._id;
+  chart.data.chartId = chart._id;
+  
+  InsertChart(function(id){
+    console.log('in insert chart');
+    chart.data.chartId = id;
+    InsertData(function(id){console.log('in insert data');}, chart.data, id);
+
+  }, chart);});
+
+app.get('/', function(req, res){
+  res.sendFile(__dirname + '/index.html');
+});
+
+io.on('connection', (socket) => {
+  socket.on('subscribeToTimer', (interval) => {
+    setInterval(() => {
+      socket.emit('timer', new Date()
+    );
+    },
+    interval);
+  });
+  socket.on('subscribeToData', (interval, id) => { 
+      setInterval(() => {
+        GetData(id, function(data)
+        {
+          data.data[0].dataPoints[0].y = 140*Math.random();
+          socket.emit('data', data);
+        })
+      }, interval);
+    });
+    socket.on('subscribeToCharts', (id) => {
+      GetCharts(id, function(data){
+        socket.emit('charts', data);
+      });
+    });
+  });
+
+function GetCharts(id, cb){
+  var dbo = db.db("chartdb");
+  dbo.collection("charts").find().toArray(function(err, res){
+      cb(res);
+  });
+}
+function GetData(id, cb){
+  var dbo = db.db("chartdb");
+  var o_id = new ObjectID(id);
+  var charts = dbo.collection("chartdata").find({ "chartId": o_id});
+    charts.forEach(function(c){
+      cb(c);
+  });
+}
+function InsertChart(cb, chart){
+  var dbo = db.db("chartdb");
+  dbo.collection("charts").insertOne(chart, function(err, res) {
+    if (err) throw err;
+    console.log("chart inserted " + chart._id);
+    cb(chart._id);
+  });
+}
+function InsertData(cb, data, id){
+  var dbo = db.db("chartdb");
+  data.chartId = id;
+  dbo.collection("chartdata").insertOne(data, function(err, res) {
+    if (err) throw err;
+    console.log("data inserted " + data._id);
+    cb(data._id);
+  });
+}
+
+
+
+http.listen(3002, function(){
+  console.log('listening on *:3002');
+});
+
+
+
+
+
+
+  /*
   var chart = 
   {
-    guid: guid,
     chart: {
+      zoomEnabled: true,
+      zoomType: "xy",
       title:{
-          text:"Test Mongo Insert"
+          text:"Test Zoom"
       },
       animationEnabled: true,
       data: 
@@ -26,186 +118,20 @@ MongoClient.connect(url, function(err, db){
       ]
     }
   };
-  var dataPoints = 
-  {
-    chartGuid: guid,
-    data:
-    [
-      {
-        type:'bar',
-        dataPoints:
-        [
-          {
-            "y": 1,
-            "label": "Sweden",
-            "x": 0
-          },
-          {
-            "y": 6,
-            "label": "Taiwan",
-            "x": 1
-          },
-          {
-            "y": 7,
-            "label": "Russia",
-            "x": 2
-          },
-          {
-            "y": 8,
-            "label": "Spain",
-            "x": 3
-          },
-          {
-            "y": 8,
-            "label": "Brazil",
-            "x": 4
-          },
-          {
-            "y": 8,
-            "label": "India",
-            "x": 5
-          },
-          {
-            "y": 9,
-            "label": "Italy",
-            "x": 6
-          },
-          {
-            "y": 9,
-            "label": "Australia",
-            "x": 7
-          },
-          {
-            "y": 12,
-            "label": "Canada",
-            "x": 8
-          },
-          {
-            "y": 13,
-            "label": "South Korea",
-            "x": 9
-          },
-          {
-            "y": 13,
-            "label": "Netherlands",
-            "x": 10
-          },
-          {
-            "y": 15,
-            "label": "asdfasdf",
-            "x": 11
-          },
-          {
-            "y": 28,
-            "label": "butt",
-            "x": 12
-          },
-          {
-            "y": 32,
-            "label": "Germany",
-            "x": 13
-          },
-          {
-            "y": 32,
-            "label": "France",
-            "x": 14
-          },
-          {
-            "y": 68,
-            "label": "Japan",
-            "x": 15
-          },
-          {
-            "y": 73,
-            "label": "fad",
-            "x": 16
-          },
-          {
-            "y": 132,
-            "label": "US",
-            "x": 17
-          }
-        ]
-      }
-    ]
-  };
+  */
 
-  dbo.collection("charts").insertOne(chart, function(err, res) {
-    if (err) throw err;
-    console.log("chart inserted");
-    db.close();
-  });
-
-  dbo.collection("chartdata").insertOne(dataPoints, function(err, res) {
-    if (err) throw err;
-    console.log("data points inserted");
-    db.close();
-  });
-
-});
-*/
-
-
-
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
-});
-
-app.get('/charts', function(req, res){
-  res.send()
-});
-
-io.on('connection', (client) => {
-  client.on('subscribeToTimer', (interval) => {
-    console.log('client is subscribing to timer with interval ', interval);
-    setInterval(() => {
-      client.emit('timer', new Date()
-    );
-    },
-    interval);
-  });
-  client.on('subscribeToData', (interval) => { 
-      console.log('client subscribed to data');
-      setInterval(() => {
-        GetData(function(data)
-        {
-          console.log('get data cb called');
-          data.data[0].dataPoints[0].y = 140*Math.random();
-          client.emit('data', data);
-        })
-      }, interval);
+  /*
+    dbo.collection("charts").insertOne(chart, function(err, res) {
+      if (err) throw err;
+      console.log("chart inserted");
+      db.close();
     });
-    client.on('subscribeToCharts', () => {
-      GetCharts(function(data){
-        console.log('get charts db called');
-        client.emit('charts', data);
-      });
+  */
+  /*
+    dbo.collection("chartdata").insertOne(dataPoints, function(err, res) {
+      if (err) throw err;
+      console.log("data points inserted");
+      db.close();
     });
-  });
-
-function GetCharts(cb){
-  MongoClient.connect(url, function(err, db){
-    if(err) throw err;
-    var dbo = db.db("chartdb");
-    var charts = dbo.collection("charts").find();
-    var result = [];
-    charts.forEach(function(c){
-      result.push(c);
-    },function(c){cb(result);});
-  });
-}
-function GetData(cb){
-  MongoClient.connect(url, function(err, db){
-    if(err) throw err;
-    var dbo = db.db("chartdb");
-    var charts = dbo.collection("chartdata").find();
-    charts.forEach(function(c){
-      console.log(c);
-      cb(c);
-    });
-  });
-}
-
-http.listen(3002, function(){
-  console.log('listening on *:3002');
-});
+    */
+  
