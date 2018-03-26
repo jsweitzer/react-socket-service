@@ -9,24 +9,51 @@ var templates = require('./templates/canvasjs.charts');
 
 //set global mongo connections
 var db;
-MongoClient.connect(url, function(err, con){
-  db = con;
-  var data = templates.BarChartData;
+function InsertChartTemplate(type){
+  var data = [];
   var chart = {};
-  chart.chart = templates.BarChart.chart;
+  if(type === 'line'){
+    data = JSON.parse(JSON.stringify(templates.LineChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.LineChart.chart));
+  }else if (type === 'stepLine'){
+    data = JSON.parse(JSON.stringify(templates.StepLineChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.StepLineChart.chart));
+  }else if (type === 'area'){
+    data = JSON.parse(JSON.stringify(templates.AreaChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.AreaChart.chart));
+  }else if (type === 'spline'){
+    data = JSON.parse(JSON.stringify(templates.SplineChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.SplineChart.chart));
+  }else if (type === 'stepArea'){
+    data = JSON.parse(JSON.stringify(templates.StepAreaChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.StepAreaChart.chart));  
+  }else if (type === 'splineArea'){
+    data = JSON.parse(JSON.stringify(templates.SplineAreaChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.SplineAreaChart.chart));  
+  }else if (type === 'Pie'){
+    data = JSON.parse(JSON.stringify(templates.PieChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.PieChart.chart));  
+  }else{
+    data = JSON.parse(JSON.stringify(templates.BarChartData));
+    chart.chart = JSON.parse(JSON.stringify(templates.BarChart.chart));
+  }
+  
+  chart.is_active = chart.chart.is_active;
   console.log('CHART' + JSON.stringify(chart))
-  chart._id = new ObjectID();
+  //chart._id = new ObjectID();
   chart.data = data;
-  console.log(JSON.stringify(chart));
-  chart.chartId = chart._id;
-  chart.data.chartId = chart._id;
+  console.log('DATA'+JSON.stringify(data[0]));
   
   InsertChart(function(id){
     console.log('in insert chart');
-    chart.data.chartId = id;
     InsertData(function(id){console.log('in insert data');}, chart.data, id);
 
-  }, chart);});
+  }, chart);
+}
+MongoClient.connect(url, function(err, con){
+  db = con;
+  InsertChartTemplate('line');
+});
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -44,7 +71,12 @@ io.on('connection', (socket) => {
       setInterval(() => {
         GetData(id, function(data)
         {
-          data.data[0].dataPoints[0].y = 140*Math.random();
+          /*
+          data.data[0].dataPoints=data.data[0].dataPoints.map(function(val){
+            val.y = 600*Math.random();
+            return val;
+          });
+          */
           socket.emit('data', data);
         })
       }, interval);
@@ -54,11 +86,17 @@ io.on('connection', (socket) => {
         socket.emit('charts', data);
       });
     });
+    socket.on('disableChart', (id) => {
+      DisableChart(id);
+    });
+    socket.on('insertChart', (type) => {
+        InsertChartTemplate(type);
+    });
   });
 
 function GetCharts(id, cb){
   var dbo = db.db("chartdb");
-  dbo.collection("charts").find().toArray(function(err, res){
+  dbo.collection("charts").find({"is_active": 1}).toArray(function(err, res){
       cb(res);
   });
 }
@@ -79,12 +117,25 @@ function InsertChart(cb, chart){
   });
 }
 function InsertData(cb, data, id){
+  console.log('data ' + JSON.stringify(data));
+  console.log('id ' + id);
   var dbo = db.db("chartdb");
   data.chartId = id;
+  console.log('data id! ' + data._id)
   dbo.collection("chartdata").insertOne(data, function(err, res) {
     if (err) throw err;
     console.log("data inserted " + data._id);
     cb(data._id);
+  });
+}
+function DisableChart(id){
+  var dbo = db.db("chartdb");
+  console.log('disabling ' + id);
+  dbo.collection("charts").updateOne({"_id": new ObjectID(id)}, {$set: {"is_active":0.0}},{upsert:true},
+  
+  function (err, res){
+    if (err) throw err;
+    console.log('disabled chart ' + id);
   });
 }
 
@@ -93,45 +144,4 @@ function InsertData(cb, data, id){
 http.listen(3002, function(){
   console.log('listening on *:3002');
 });
-
-
-
-
-
-
-  /*
-  var chart = 
-  {
-    chart: {
-      zoomEnabled: true,
-      zoomType: "xy",
-      title:{
-          text:"Test Zoom"
-      },
-      animationEnabled: true,
-      data: 
-      [
-        {     
-            type: "bar",
-            dataPoints: []
-        }
-      ]
-    }
-  };
-  */
-
-  /*
-    dbo.collection("charts").insertOne(chart, function(err, res) {
-      if (err) throw err;
-      console.log("chart inserted");
-      db.close();
-    });
-  */
-  /*
-    dbo.collection("chartdata").insertOne(dataPoints, function(err, res) {
-      if (err) throw err;
-      console.log("data points inserted");
-      db.close();
-    });
-    */
   
