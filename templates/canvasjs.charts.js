@@ -1,132 +1,72 @@
 var ObjectID = require('mongodb').ObjectID;
-
+exports.ColorSets = 
+{
+  Greens: [
+    ""
+  ]
+}
 exports.BarChart = 
 {
-  
-  chart: {
-      is_active: 1.0,
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options: {
       zoomEnabled: true,
       zoomType: "xy",
       title:{
-          text:"Test Template2"
+          text:"Bar"
       },
       animationEnabled: true,
       data: 
       [
         {     
             type: "bar",
-            dataPoints: []
+            dataPoints: [
+              {
+                "y": 1,
+                "label": "Sweden",
+                "x": 0,
+                "color": "#594F4F"
+              },
+              {
+                "y": 6,
+                "label": "Taiwan",
+                "x": 1,
+                "color": "#547980"
+              },
+              {
+                "y": 7,
+                "label": "Russia",
+                "x": 2,
+                "color": "#45ADA8"
+              },
+              {
+                "y": 8,
+                "label": "Spain",
+                "x": 3,
+                "color": "#9DE0AD"
+              },
+              {
+                "y": 8,
+                "label": "Brazil",
+                "x": 4,
+                "color": "#E5FCC2"
+              }
+            ]
         }
       ]
     }
 }
-exports.BarChartData = 
-  {
-    chartId: new ObjectID('5ab7d1c0688ecda5a8faf63d'),
-    data:
-    [
-      {
-        type:'bar',
-        dataPoints:
-        [
-          {
-            "y": 1,
-            "label": "Sweden",
-            "x": 0
-          },
-          {
-            "y": 6,
-            "label": "Taiwan",
-            "x": 1
-          },
-          {
-            "y": 7,
-            "label": "Russia",
-            "x": 2
-          },
-          {
-            "y": 8,
-            "label": "Spain",
-            "x": 3
-          },
-          {
-            "y": 8,
-            "label": "Brazil",
-            "x": 4
-          },
-          {
-            "y": 8,
-            "label": "India",
-            "x": 5
-          },
-          {
-            "y": 9,
-            "label": "Italy",
-            "x": 6
-          },
-          {
-            "y": 9,
-            "label": "Australia",
-            "x": 7
-          },
-          {
-            "y": 12,
-            "label": "Canada",
-            "x": 8
-          },
-          {
-            "y": 13,
-            "label": "South Korea",
-            "x": 9
-          },
-          {
-            "y": 13,
-            "label": "Netherlands",
-            "x": 10
-          },
-          {
-            "y": 15,
-            "label": "asdfasdf",
-            "x": 11
-          },
-          {
-            "y": 28,
-            "label": "set2",
-            "x": 12
-          },
-          {
-            "y": 32,
-            "label": "Germany",
-            "x": 13
-          },
-          {
-            "y": 32,
-            "label": "France",
-            "x": 14
-          },
-          {
-            "y": 68,
-            "label": "Japan",
-            "x": 15
-          },
-          {
-            "y": 73,
-            "label": "fad",
-            "x": 16
-          },
-          {
-            "y": 132,
-            "label": "US",
-            "x": 17
-          }
-        ]
-      }
-    ]
-  };
 exports.LineChart = 
   {
-    chart:{
-      is_active: 1.0,
+    size: 'medium',
+    class: 'col col-md-6 col-lg-6 col-sm-6 card',
+    is_active: 1.0,
+    width: 95,
+    height: 400,
+    options:{
       zoomEnabled: true,
       zoomType: "xy",
       title:{
@@ -142,14 +82,7 @@ exports.LineChart =
             { "x": 2, "y": 414 },
             { "x": 3, "y": 520 },
             { "x": 4, "y": 460 },
-            { "x": 5, "y": 450 },
-            { "x": 6, "y": 500 },
-            { "x": 7, "y": 480 },
-            { "x": 8, "y": 480 },
-            { "x": 9, "y": 410 },
-            { "x": 10, "y": 500 },
-            { "x": 11, "y": 480 },
-            { "x": 12, "y": 510 }]
+            { "x": 5, "y": 450 }]
         }
       ]
   }
@@ -180,9 +113,11 @@ exports.LineChartData =
   };
   exports.StepLineChart = 
   {
-    chart:{
-      is_active: 1.0,
-      zoomEnabled: true,
+    size: 'medium',
+    height: 400,
+    width: 95,
+    is_active: true,
+    options:{
       zoomType: "xy",
       title:{
           text:"StepLine"
@@ -236,7 +171,13 @@ exports.StepLineChartData =
   };
 exports.SplineChart = 
 {
-  chart:{
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options:{
+    size: 'medium',
     is_active: 1.0,
     zoomEnabled: true,
     zoomType: "xy",
@@ -292,8 +233,12 @@ exports.SplineChartData =
 };
 exports.StepAreaChart = 
 {
-  chart:{
-    is_active: 1.0,
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options:{
     zoomEnabled: true,
     zoomType: "xy",
     title:{
@@ -348,8 +293,12 @@ exports.StepAreaChartData =
 };
 exports.AreaChart = 
 {
-  chart:{
-    is_active: 1.0,
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options:{
     zoomEnabled: true,
     zoomType: "xy",
     title:{
@@ -404,8 +353,12 @@ exports.AreaChartData =
 };
 exports.SplineAreaChart = 
 {
-  chart:{
-    is_active: 1.0,
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options:{
     zoomEnabled: true,
     zoomType: "xy",
     title:{
@@ -460,8 +413,12 @@ exports.SplineAreaChartData =
 };
 exports.PieChart = 
 {
-  chart:{
-    is_active: 1.0,
+  size: 'medium',
+  class: 'col col-md-6 col-lg-6 col-sm-6 card',
+  is_active: 1.0,
+  width: 95,
+  height: 400,
+  options:{
     zoomEnabled: true,
     zoomType: "xy",
     title:{

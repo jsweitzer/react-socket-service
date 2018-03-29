@@ -14,42 +14,43 @@ function InsertChartTemplate(type){
   var chart = {};
   if(type === 'line'){
     data = JSON.parse(JSON.stringify(templates.LineChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.LineChart.chart));
+    chart = JSON.parse(JSON.stringify(templates.LineChart));
   }else if (type === 'stepLine'){
     data = JSON.parse(JSON.stringify(templates.StepLineChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.StepLineChart.chart));
+    chart = JSON.parse(JSON.stringify(templates.StepLineChart));
   }else if (type === 'area'){
     data = JSON.parse(JSON.stringify(templates.AreaChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.AreaChart.chart));
+    chart = JSON.parse(JSON.stringify(templates.AreaChart));
   }else if (type === 'spline'){
     data = JSON.parse(JSON.stringify(templates.SplineChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.SplineChart.chart));
+    chart = JSON.parse(JSON.stringify(templates.SplineChart));
   }else if (type === 'stepArea'){
     data = JSON.parse(JSON.stringify(templates.StepAreaChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.StepAreaChart.chart));  
+    chart = JSON.parse(JSON.stringify(templates.StepAreaChart));  
   }else if (type === 'splineArea'){
     data = JSON.parse(JSON.stringify(templates.SplineAreaChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.SplineAreaChart.chart));  
-  }else if (type === 'Pie'){
+    chart = JSON.parse(JSON.stringify(templates.SplineAreaChart));  
+  }else if (type === 'pie'){
     data = JSON.parse(JSON.stringify(templates.PieChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.PieChart.chart));  
+    chart = JSON.parse(JSON.stringify(templates.PieChart));  
   }else{
-    data = JSON.parse(JSON.stringify(templates.BarChartData));
-    chart.chart = JSON.parse(JSON.stringify(templates.BarChart.chart));
+    chart = JSON.parse(JSON.stringify(templates.BarChart));
   }
   
-  chart.is_active = chart.chart.is_active;
+  chart.is_active = 1;
   console.log('CHART' + JSON.stringify(chart))
   //chart._id = new ObjectID();
-  chart.data = data;
+  chart;
   console.log('DATA'+JSON.stringify(data[0]));
   
   InsertChart(function(id){
     console.log('in insert chart');
-    InsertData(function(id){console.log('in insert data');}, chart.data, id);
-
   }, chart);
 }
+var TimeChunk = [];
+
+
+
 MongoClient.connect(url, function(err, con){
   db = con;
   InsertChartTemplate('line');
@@ -68,15 +69,27 @@ io.on('connection', (socket) => {
     interval);
   });
   socket.on('subscribeToData', (interval, id) => { 
+      GetData(id, function(data)
+      {
+        console.log(JSON.stringify(TimeChunk));
+        data.options.data[0].dataPoints=data.options.data[0].dataPoints.map(function(val, i){
+          val.y = 600*Math.random();
+          val.x = TimeChunk[i];
+          return val;
+        });
+        console.log('inthedatamethod');
+        socket.emit('data', data);
+      })
       setInterval(() => {
         GetData(id, function(data)
         {
-          /*
-          data.data[0].dataPoints=data.data[0].dataPoints.map(function(val){
+          console.log(JSON.stringify(TimeChunk));
+          data.options.data[0].dataPoints=data.options.data[0].dataPoints.map(function(val, i){
             val.y = 600*Math.random();
+            val.x = TimeChunk[i];
             return val;
           });
-          */
+          
           socket.emit('data', data);
         })
       }, interval);
@@ -92,8 +105,27 @@ io.on('connection', (socket) => {
     socket.on('insertChart', (type) => {
         InsertChartTemplate(type);
     });
+    socket.on('updateChart', (data, cb) => {
+        UpdateChart(data, function(){
+          GetCharts(null, function(data){
+            socket.emit('charts', data);
+          });
+        });
+    });
+    socket.on('getData', (data, cb) => {
+      UpdateChart(data, function(){
+        GetData(data, function(data){
+          socket.emit('data', data);
+        });
+      });
   });
-
+});
+function Chunker(){
+  TimeChunk.push(new Date());
+  if(TimeChunk.length > 1){
+    TimeChunk.shift();
+  }
+}
 function GetCharts(id, cb){
   var dbo = db.db("chartdb");
   dbo.collection("charts").find({"is_active": 1}).toArray(function(err, res){
@@ -103,17 +135,27 @@ function GetCharts(id, cb){
 function GetData(id, cb){
   var dbo = db.db("chartdb");
   var o_id = new ObjectID(id);
-  var charts = dbo.collection("chartdata").find({ "chartId": o_id});
+  var charts = dbo.collection("charts").find({ "_id": o_id});
     charts.forEach(function(c){
       cb(c);
   });
 }
 function InsertChart(cb, chart){
   var dbo = db.db("chartdb");
+  console.log("inserting chart " + JSON.stringify(chart));
   dbo.collection("charts").insertOne(chart, function(err, res) {
     if (err) throw err;
     console.log("chart inserted " + chart._id);
     cb(chart._id);
+  });
+}
+function UpdateChart(chart, cb){
+  var dbo = db.db("chartdb");
+  console.log('chart to upsert: ' + JSON.stringify(chart));
+  dbo.collection("charts").updateOne({"_id":new ObjectID(chart._id)}, { $set: {size: chart.size, class: chart.class, height: chart.height, width: chart.width} }, function(err, res) {
+    if (err) throw err;
+    console.log("chart updated " + res);
+    cb(res);
   });
 }
 function InsertData(cb, data, id){
@@ -122,7 +164,7 @@ function InsertData(cb, data, id){
   var dbo = db.db("chartdb");
   data.chartId = id;
   console.log('data id! ' + data._id)
-  dbo.collection("chartdata").insertOne(data, function(err, res) {
+  dbo.collection("charts").insertOne(data, function(err, res) {
     if (err) throw err;
     console.log("data inserted " + data._id);
     cb(data._id);
@@ -142,6 +184,7 @@ function DisableChart(id){
 
 
 http.listen(3002, function(){
+  setInterval(Chunker, 1000);
   console.log('listening on *:3002');
 });
   
